@@ -1,6 +1,7 @@
 module.exports = function (min, max) {
   var input = document.createElement("input")
   input.type = "number"
+  input.value = "0"
   Object.defineProperty(input, "$value", {
     get: function () { return Number(input.value) },
     set: function (v) { return input.value = String(v) }

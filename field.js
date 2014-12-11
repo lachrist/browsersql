@@ -6,14 +6,14 @@ var Identifier = require("./field/identifier.js")
 var integer = require("./field/integer.js")
 var text = require("./field/text.js")
 
-module.exports = function (sql, schema, viewers, descriptor) {
+module.exports = function (global, descriptor) {
   var field
-  if (descriptor.type === "identifier") { field = identifier(sql, schema, viewers, descriptor.foreign) }
-  else if (descriptor.type === "integer") { field = integer(descriptor.min, descriptor.max) }
-  else if (descriptor.type === "enum") { field = enum(descriptor.options) }
-  else if (descriptor.type === "boolean") { field = boolean() }
-  else if (descriptor.type === "float") { field = float(descriptor.unsigned) }
-  else if (descriptor.type === "text") { field = text(descriptor.maxlength) }
+  if (descriptor.type === "identifier") { field = Identifier(global, descriptor.table) }
+  else if (descriptor.type === "integer") { field = Integer(descriptor.min, descriptor.max) }
+  else if (descriptor.type === "enum") { field = Enum(descriptor.options) }
+  else if (descriptor.type === "boolean") { field = Boolean() }
+  else if (descriptor.type === "float") { field = Float(descriptor.unsigned) }
+  else if (descriptor.type === "text") { field = Text(descriptor.maxlength) }
   else { field = text() }
   if (!descriptor.nullable) { return field }
   var checkbox = document.createElement("input")
@@ -28,9 +28,12 @@ module.exports = function (sql, schema, viewers, descriptor) {
     set: function (v) { return (input.$disabled=v, checkbox.disabled=v) }
   })
   input.$onchange = function () { checkbox.checked=false; if (span.$onchange) { span.$onchange() } }
-  checkbox.onchange = function () { if (span.$onchange) { span.$onchange() } }
-  span.appendChild(field)
-  span.appendChild(document.createTextNode("null:"))
+  checkbox.onchange = function () {
+    field.hidden = checkbox.checked
+    if (span.$onchange) { span.$onchange() }
+  }
   span.appendChild(checkbox)
+  span.appendChild(document.createTextNode("(null)"))
+  span.appendChild(field)
   return span
 }

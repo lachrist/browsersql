@@ -1,6 +1,7 @@
 
 function text (maxlength) {
   var input = document.createElement("textarea")
+  input.value = ""
   if (maxlength) { input.maxlength = maxlength }
   Object.defineProperty(input, "$value", {
     get: function () { return input.value },

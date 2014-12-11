@@ -1,96 +1,75 @@
 
 var Feedback = require("./feedback.js")
+var Identifier = require("./field/identifier.js")
 
-return function (sql, table, onselect, insert) {
+function insert_query (db, tb, vls) {
+  var query = "INSERT INTO "+Util.backquote(db)+"."+Util.backquote(tb)+" "
+  query = query+"("+Object.keys(vls).map(Util.backquote).join(",")+")"
+  query = query+" VALUES ("+Object.keys(vls).map(function (c) { return Util.quote(vls[c]) })+");"
+  query = query+"\nSELECT LAST_INSERT_ID();"
+  return query
+}
 
-  ///////////
-  // State //
-  ///////////
+function delete_query (db, tb, id) {
+  return "DELETE FROM "+Util.backquote(db)+"."+Util.backquote(tb)+" WHERE id="+Util.quote(id)
+}
 
-  var id
+return function (global, table, onselect, oninsert) {
 
   /////////////////////
   // Private Methods //
   /////////////////////
 
-  // GUI-only update
-  function patient () {
+  function disable () {
     delete_button.disabled = true
     insert_button.disabled = true
-    id_input.prop.disabled = true
+    field.$disabled = true
   }
 
-  // GUI-only update
-  function update () {
-    delete_button.disabled = id === ""
+  function enable () {
+    delete_button.disabled = field.$value===0
     insert_button.disabled = false
-    id_input.prop.disabled = false
-    id_input.val(id)
-  }
-
-  function change (new_id) {
-    id = new_id
-    update()
-    onselect(id===""?null:id)
+    field.$disabled = false
   }
 
   ////////////////////
   // HTML attribute //
   ////////////////////
 
-  var id_input = document.createElement("input")
-  id_input.type = "text"
-  id_input.placeholder = "Enter an ID..."
-  id_input.onchange = function () {
-    if (id_input.value === "") { return change(null) }
-    patient()
-    var new_id = id_input.value
-    if (new_id === "") { return onselect(null) }
-    sql("SELECT id FROM table "+Util.backquote(table)+" WHERE id="+Util.quote(new_id), function (err, tables) {
-      if (err) { return (update(), feedback.$fail("SQL error: "+err)) }
-      if (tables[0].length === 0) { return (update(), feedback.$fail("No such ID")) }
-      change(new_id)
-    })
+  var field = Identifier(global, table)
+  field.$onchange = function () {
+    delete_button.disabled = false
+    onselect(field.$value)
   }
 
   var insert_button = document.createElement("button")
   insert_button.textContent = "Insert"
   insert_button.onclick = function () {
-    patient()
-    var o = insert()
-    var query = "INSERT INTO "+Util.backquote(table)+"("
-    query = query+"("+Object.keys(o).map(Util.backquote).join(",")+")"
-    query = query+" VALUES ("+Object.keys(o).map(function (k) { return Util.quote(o[k]) })+");"
-    query = query+"\nSELECT LAST_INSERT_ID();"
-    sql(query, function (err, tables) {
-      if (err) { (update(), feedback.$fail("SQL error: "+err)) }
-      change(tables[0][0][0])
+    disable()
+    global.sql(insert_query(global.database, table, oninsert()), function (err, results) {
+      err?feedback.$sqlf(err):(field.$value=tables[1][0][0],onselect(field.$value))
+      enable()
     })
   }
 
   var delete_button = document.createElement("button")
+  delete_button.disabled = true
   delete_button.textContent = "Delete"
   delete_button.onclick = function () {
-    if (confirm("Are you sure you want to delete this item and its associated entries?")) {
-      patient()
-      sql("DELETE FROM "+Util.backquote(table)+" WHERE id="+Util.quote(id), function (err) {
-        if (err) { (update(), feedback.$fail("SQL error: "+err))  }
-        change("")
+    if (confirm("Are you sure you want to delete this item and possibly its associated entries?")) {
+      disable()
+      global.sql(delete_query(global.database, table, field.$value), function (err) {
+        err?feedback.$sqlf(err):(field.$value=0,onselect(0))
+        enable()
       })
     }
   }
 
   var feedback = Feedback()
 
-  //////////
-  // Init //
-  //////////
-
-  change("")
-
-  ///////////////
-  // Interface //
-  ///////////////
+  //////////////
+  // Top HTML //
+  //////////////
 
   var selector = document.createElement("div")
   selector.class = "browsersql selector"

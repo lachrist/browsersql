@@ -1,12 +1,18 @@
 
-function enum (options) {
+function enum (values) {
+  if (values.length===0) {
+    var feedback = Feedback()
+    feedback.$fail("No options given")
+    return feedback
+  }
   var input = document.createElement("select")
-  options.forEach(function (str) {
+  for (var i=0; i<values.length; i++) {
     var option = document.createElement("option")
-    option.textContent = str
-    option.value = str
+    option.textContent = values[i]
+    option.selected = i===0
+    option.value = values[i]
     input.appendChild(option)
-  })
+  }
   Object.defineProperty(input, "$value", {
     get: function () { return input.value },
     set: function (v) { return input.value = v }
@@ -16,5 +22,5 @@ function enum (options) {
     set: function (v) { return input.disabled = v }
   })
   input.onchange = function () { if (input.$onchange) { input.$onchange() } }
- return input
+  return input
 }

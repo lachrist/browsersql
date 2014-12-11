@@ -1,0 +1,21 @@
+{ "name" : "browsersql"
+, "version" : "0.0.0"
+, "files" : [
+    "browsersql",
+    "field",
+    "console.js",
+    "feedback.js",
+    "field.js",
+    "login.js",
+    "schema.js",
+    "searcher.js",
+    "selector.js",
+    "setter.js",
+    "util.js" ]
+, "main": "browsersql.js"
+, "description" : "A simple JavaScript toolkit for constructing web pages accessing a SQL database."
+, "keywords" : ["Browser", "SQL", "Toolkit"]
+, "homepage": "http://github.com/lachrist/browsersql"
+, "author" : {"name":"Laurent Christophe", "email":"lachrist@vub.ac.be"}
+, "license" : "MIT"
+}

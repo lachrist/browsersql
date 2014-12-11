@@ -14,5 +14,9 @@ module.exports = function () {
     span.class = "browsersql feedback failure"
     span.textContent = err
   }
+  span.$sqlf = function (err) {
+    span.class = "browsersql feedback failure"
+    span.textContent = "SQL error: "+err
+  }
   return span
 }

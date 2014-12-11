@@ -13,7 +13,7 @@ module.exports = function (sql) {
     sql(textarea.value, function (err, results) {
       textarea.disabled = false
       button.disabled = false
-      err?feedback.$fail("SQL error: "+err):feedback.$succ("Query successful")
+      err?feedback.$sqlf(err):feedback.$succ("Query successful")
       for (var i=0; i<results.length; i++) {
         var table = document.createElement("table")
         var li = document.createElement("li")

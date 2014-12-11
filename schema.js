@@ -10,7 +10,8 @@
 // unsigned :: Boolean
 // foreign  :: String
 
-function parse_type (type) {
+function parse (type) {
+  // TODO warning when using too large number for JavaScript engine (e.g. bigint & longtext)
   var xs
   if (type === "tinyint(1)") { return {type:"boolean"} }
   // Signed integer
@@ -33,7 +34,7 @@ function parse_type (type) {
   if (type === "float unsigned") { return {type:"float", unsigned:true} }
   if (type === "double") { return {type:"float", unsigned:false} }
   if (type === "double unsigned") { return {type:"float", unsigned:true} }
-  // Enum TODO full string literal support (now cannot contain commas and escaped quotes)
+  // Enum TODO: full string literal support (now cannot contain commas and escaped quotes)
   if (xs=/^enum\((\'[^\',]*\'(,\'[^\',]*\')*)\)$/.exec(type)) { return {type:"enum", options:xs[1].split(",").map(function (s) { return s.substring(1, s.length-1) }))} }
   // Text
   if (xs=/^varchar\(([0-9]+)\)$/.exec(type)) { return {type:"text", maxlength:Number(xs[1])} }
@@ -42,32 +43,32 @@ function parse_type (type) {
   if (type === "text") { return {type:"text", maxlength:65535} }
   if (type === "mediumtext") { return {type:"text", maxlength:16777215} }
   if (type === "longtext") { return {type:"text", maxlength:4294967295} }
-  // Default
-  return {type:"text"}
+  // Default TODO: date-based field
+  return {type:"unknown"}
 }
 
-module.exports = function (sql, schema, table, k) {
-  if (!schema[table]) {
-    schema[table] = [k]
-    return sql("SHOW COLUMNS FROM " + Util.backquote(table), function (err, tables) {
-      var ks = schema[table]
-      if (err) {
-        delete schema[table]
-        k(err)
-        return ks.forEach(function (k) { k(err) })
+module.exports = function (sql, db, k) {
+  sql("SHOW TABLES FROM "+Util.backquote(db), function (err, results) {
+    if (err) { return k(err) }
+    if (results[0].length === 0) { return k(null, {}) }
+    var tables = results[0].map(function (row) { return row[0] })
+    var query = tables.map(function (table) { return "SHOW COLUMNS FROM "+Util.backquote(db)+"."+Util.backquote(table)+";" }).join("\n")
+    sql(query, function (err, results) {
+      if (err) { return k(err) }
+      var schema = {}
+      for (var i=0; i<results.length; i++) {
+        schema[tables[i]] = {}
+        for (var j=0; j<results[i].length; i++) {
+          var column = results[i][j][0]
+          var descr = {}
+          schema[tables[i]][column] = descr
+          if (column==="id") { schema[tables[i]][column] = {type:"identifier", table:tables[i]} }
+          else if (var xs = /^(.+)_id$/.exec(column)) { schema[tables[i]][column] = {type:"identifier", table:xs[1]} }
+          else { schema[table][column] = parse_type(results[i][j][1]) }
+          schema[table][column].nullable = results[i][j][2]==="YES"
+        }
       }
-      schema[table] = {}
-      tables[0].forEach(function (col) {
-        var o = {}
-        schema[table][col[0]] = o
-        if (col[0]==="id") { o = {type:"identifier"} }
-        else if (var xs = /^(.+)_id$/.exec(col[0])) { o = {type:"identifier", foreign:xs[1]} }
-        else { o = parse_type(col[1]) }
-        o.nullable = col[2]==="YES"
-      })
-      ks.forEach(function (k) { k(null) })
+      k(null, schema)
     })
-  }
-  if (Array.isArray(schema[table])) { return schema[table].push(k) }
-  k(null)
+  })
 }

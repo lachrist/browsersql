@@ -1,55 +1,52 @@
 
 var Searcher = require("./searcher.js")
 
-module.exports = function (sql, schema, viewers, foreign) {
-  if (!foreign) {
-    var input = document.createElement("input")
-    input.type = "number"
-    input.min = 0
-    return input
-  }
-  var viewer = viewers[foreign] || function (id) { var span = document.createElement("span"); span.textContent=id; return span; }
+// viewer, search-button, searcher
+
+module.exports = function (global, table) {
+  var id = 0
+  var viewer = global.viewers[table](0)
   var span = document.createElement("span")
+  // button
   var button = document.createElement("button")
-  button.onclick = expand
-  button.textContent = "Search"
-  // value
-  var id
-  function get_value () { return id }
-  function set_value (v) {
-    id = v
-    while (span.firstChild) { span.firstChild.remove() }
-    span.appendChild(viewer(id))
-    span.appendChild(button)
-    if (searcher) { span.appendChild(searcher) }
-    return v
+  function expand () {
+    button.textContent="Hide"
+    button.onclick=collapse
+    searcher.hidden=false
+    searcher.$refresh()
   }
-  Object.defineProperty(span, "$value", {get:get_value,set:set_value})
-  // disabled
+  function collapse () {
+    button.textContent="Search"
+    button.onclick=expand
+    searcher.hidden=true
+  }
+  // searcher
+  var searcher = Searcher(global, table, function (id) {
+    set(id)
+    collapse()
+    if (span.$onchange) { span.$onchange() }
+  })
+  // $value
+  function set (v) {
+    id = v
+    span.removeChild(viewer)
+    viewer = global.viewers[table](id)
+    span.insertBefore(viewer, button)
+    return id
+  }
+  Object.defineProperty(span, "$value", {get:function () { return id }, set:set_value})
+  // $disabled
   Object.defineProperty(span, "$disabled", {
     get: function () { return button.disabled },
     set: function (v) {
-      if (v&&searcher) { collapse() }
+      if (v&&!searcher.hidden) { collapse() }
       return button.disabled = v
     }
   })
-  // searcher
-  var searcher = null
-  function expand () {
-    searcher = Searcher(sql, schema, viewers, foreign, function (id) {
-      set_value(id)
-      collapse()
-      if (span.$onchange) { span.$onchange() }
-    })
-    button.onclick = collapse
-    span.appendChild(searcher)
-  }
-  function collapse () {
-    searcher = null
-    button.onclick = expand
-    searcher.remove()
-  }
-  // return
-  set_value(null)
+  // initialize
+  collapse()
+  span.appendChild(viewer)
+  span.appendChild(button)
+  span.appendChild(searcher)
   return span
 }
