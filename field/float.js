@@ -1,5 +1,5 @@
 
-function float (unsigned) {
+module.exports = function (unsigned) {
   var input = document.createElement("input")
   input.type = "number"
   input.value = "0"

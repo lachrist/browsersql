@@ -1,6 +1,7 @@
 
 var Util = require("./util.js")
 var Feedback = require("./feedback.js")
+var Field = require("./field.js")
 
 function search_query (db, tb, fs, ss) {
   var query = "SELECT id FROM "+Util.backquote(db)+"."+Util.backquote(tb)+" WHERE TRUE"
@@ -24,11 +25,13 @@ module.exports = function (global, table, onsearch) {
     return searcher
   }
   // fields & selects
-  var fields = {}
-  var selects = {}
+  var fields, selects
   (function () {
+    fields = {}
+    selects = {}
     for (var column in global.schema[table]) {
       var description = global.schema[table][column]
+      if (column === "id") { description = {type:"integer", min:0, max:Number.MAX_VALUE} } // you dont want to search for an id within a searcher
       fields[column] = Field(global, description)
       selects[column] = document.createElement("select")
       var opts
@@ -36,7 +39,8 @@ module.exports = function (global, table, onsearch) {
       else if (description.type === "text") { opts = ["=", "!=", "LIKE", "NOT LIKE", "REGEXP", "NOT REGEXP", "<", "<=", ">", ">="] }
       else { opts = ["=", "!="] } // boolean & enum & identifier
       var option = document.createElement("option")
-      option.value = null
+      option.value = ""
+      option.textContent = ""
       option.selected = true
       selects[column].appendChild(option)
       opts.forEach(function (opt) {
@@ -45,13 +49,13 @@ module.exports = function (global, table, onsearch) {
         option.value = opt
         selects[column].appendChild(option)
       })
-      var label = document.createElement("label")
-      label.appendChild(document.createTextNode(column))
-      label.appendChild(selects[column])
-      label.appendChild(fields[column])
-      searcher.appendChild(label)
+      var div = document.createElement("div")
+      div.appendChild(document.createTextNode(column))
+      div.appendChild(selects[column])
+      div.appendChild(fields[column])
+      searcher.appendChild(div)
     }
-  } ())
+  } ());
   // search-button
   (function () {
     var button = document.createElement("button")
@@ -62,7 +66,7 @@ module.exports = function (global, table, onsearch) {
       feedback.$free()
       ids = []
       navigate(1)
-      sql(search_query(global.database, table, fields, selects), cont)
+      global.sql(search_query(global.database, table, fields, selects), cont)
     }
     function cont (err, results) {
       button.disabled = false
@@ -73,7 +77,7 @@ module.exports = function (global, table, onsearch) {
       navigate(1)
     }
     searcher.appendChild(button)
-  } ())
+  } ());
   // feedback
   var feedback = Feedback()
   searcher.appendChild(feedback)
@@ -95,16 +99,16 @@ module.exports = function (global, table, onsearch) {
       while (ol.firstChild) { ol.removeChild(ol.firstChild) }
       ids.slice((page-1)*10, (page-1)*10+10).forEach(function (id) {
         var li = document.createElement("li")
-        li.appendChild(viewer(id))
+        li.appendChild(global.viewers[table](id))
         if (onsearch) { li.onclick = function () { onsearch(id) } }
         ol.appendChild(li)
       })
     }
-    var label = document.createElement("label")
-    label.textContent = "Page:"
-    label.appendChild(input)
-    searcher.appendChild(label)
-  } ())
+    var div = document.createElement("div")
+    div.appendChild(document.createTextNode("Page:"))
+    div.appendChild(input)
+    searcher.appendChild(div)
+  } ());
   // list
   var ol = document.createElement("ol")
   searcher.appendChild(ol)

@@ -1,5 +1,5 @@
 
-function enum (values) {
+module.exports = function (values) {
   if (values.length===0) {
     var feedback = Feedback()
     feedback.$fail("No options given")

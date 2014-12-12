@@ -1,0 +1,1 @@
+window.browsersql = require("../browsersql.js")

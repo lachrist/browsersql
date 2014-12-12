@@ -1,5 +1,5 @@
 
-function text (maxlength) {
+module.exports = function (maxlength) {
   var input = document.createElement("textarea")
   input.value = ""
   if (maxlength) { input.maxlength = maxlength }

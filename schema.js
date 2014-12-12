@@ -1,4 +1,6 @@
 
+var Util = require("./util.js")
+
 // type :: integer || float || boolean || text || decimal || identifier || enum
 // options :: [String]
 // min :: Number
@@ -18,7 +20,7 @@ function parse (type) {
   if (/^tinyint(\([0-9]+\))$/.test(type)) { return {type:"integer", min:-128, max:127} }
   if (/^smallint(\([0-9]+\))$/.test(type)) { return {type:"integer", min:-32768, max:32767} }
   if (/^mediumint(\([0-9]+\))$/.test(type)) { return {type:"integer", min:-8388608, max:8388607} }
-  if (/^int(\([0-9]+\))$/.test(type)) { return {type:"integer", -2147483648, max:2147483647} }
+  if (/^int(\([0-9]+\))$/.test(type)) { return {type:"integer", min:-2147483648, max:2147483647} }
   if (/^bigint(\([0-9]+\))$/.test(type)) { return {type:"integer", min:-9223372036854775808, max:9223372036854775807} }   
   // Unsigned integer
   if (/^tinyint(\([0-9]+\)) unsigned$/.test(type)) { return {type:"integer", min:0, max:255} }
@@ -35,7 +37,14 @@ function parse (type) {
   if (type === "double") { return {type:"float", unsigned:false} }
   if (type === "double unsigned") { return {type:"float", unsigned:true} }
   // Enum TODO: full string literal support (now cannot contain commas and escaped quotes)
-  if (xs=/^enum\((\'[^\',]*\'(,\'[^\',]*\')*)\)$/.exec(type)) { return {type:"enum", options:xs[1].split(",").map(function (s) { return s.substring(1, s.length-1) }))} }
+  if (xs=/^enum\((\'[^\',]*\'(,\'[^\',]*\')*)\)$/.exec(type)) {
+    return {
+      type:"enumeration",
+      options:xs[1].split(",").map(function (s) {
+        return s.substring(1, s.length-1)
+      })
+    }
+  }
   // Text
   if (xs=/^varchar\(([0-9]+)\)$/.exec(type)) { return {type:"text", maxlength:Number(xs[1])} }
   if (xs=/^char\([0-9]+\)$/.exec(type)) { return {type:"text", maxlength:Number(xs[1])} }
@@ -58,14 +67,15 @@ module.exports = function (sql, db, k) {
       var schema = {}
       for (var i=0; i<results.length; i++) {
         schema[tables[i]] = {}
-        for (var j=0; j<results[i].length; i++) {
+        for (var j=0; j<results[i].length; j++) {
+          var xs
           var column = results[i][j][0]
           var descr = {}
           schema[tables[i]][column] = descr
           if (column==="id") { schema[tables[i]][column] = {type:"identifier", table:tables[i]} }
-          else if (var xs = /^(.+)_id$/.exec(column)) { schema[tables[i]][column] = {type:"identifier", table:xs[1]} }
-          else { schema[table][column] = parse_type(results[i][j][1]) }
-          schema[table][column].nullable = results[i][j][2]==="YES"
+          else if (xs = /^(.+)_id$/.exec(column)) { schema[tables[i]][column] = {type:"identifier", table:xs[1]} }
+          else { schema[tables[i]][column] = parse(results[i][j][1]) }
+          schema[tables[i]][column].nullable = results[i][j][2]==="YES"
         }
       }
       k(null, schema)

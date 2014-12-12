@@ -1,6 +1,7 @@
 
 var Feedback = require("./feedback.js")
 var Identifier = require("./field/identifier.js")
+var Util = require("./util.js")
 
 function insert_query (db, tb, vls) {
   var query = "INSERT INTO "+Util.backquote(db)+"."+Util.backquote(tb)+" "
@@ -14,7 +15,11 @@ function delete_query (db, tb, id) {
   return "DELETE FROM "+Util.backquote(db)+"."+Util.backquote(tb)+" WHERE id="+Util.quote(id)
 }
 
-return function (global, table, onselect, oninsert) {
+function empty () { return {} }
+
+module.exports = function (global, table, onselect, oninsert) {
+
+  oninsert = oninsert || empty
 
   /////////////////////
   // Private Methods //
@@ -47,7 +52,7 @@ return function (global, table, onselect, oninsert) {
   insert_button.onclick = function () {
     disable()
     global.sql(insert_query(global.database, table, oninsert()), function (err, results) {
-      err?feedback.$sqlf(err):(field.$value=tables[1][0][0],onselect(field.$value))
+      err?feedback.$sqlf(err):(field.$value=results[1][0][0],onselect(field.$value))
       enable()
     })
   }
@@ -73,8 +78,9 @@ return function (global, table, onselect, oninsert) {
 
   var selector = document.createElement("div")
   selector.class = "browsersql selector"
-  selector.appendChild(id_input)
-  selector.appendChild(create_button)
+  selector.appendChild(document.createTextNode(table+":"))
+  selector.appendChild(field)
+  selector.appendChild(insert_button)
   selector.appendChild(delete_button)
   selector.appendChild(feedback)
   return selector

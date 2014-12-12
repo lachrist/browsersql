@@ -1,5 +1,5 @@
 
-function boolean () {
+module.exports = function () {
   var input = document.createElement("input")
   input.type = "checkbox"
   Object.defineProperty(input, "$value", {
