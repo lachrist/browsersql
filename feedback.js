@@ -1,7 +1,7 @@
 
 module.exports = function () {
   var span = document.createElement("span")
-  span.class = "browsersql feedback"
+  span.className = "browsersql feedback"
   span.$free = function () {
     span.class = "browsersql feedback"
     span.textContent = ""

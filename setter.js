@@ -2,6 +2,7 @@
 var Field = require("./field.js")
 var Util = require("./util.js")
 var Feedback = require("./feedback.js")
+var Label = require("./label.js")
 
 function set (db, tb, id, cl, vl) { return "UPDATE "+Util.backquote(db)+"."+Util.backquote(tb)+" SET "+Util.backquote(cl)+"="+Util.quote(vl)+" WHERE id="+Util.quote(id) }
 
@@ -9,8 +10,8 @@ function get (db, tb, id, cl) { return "SELECT "+Util.backquote(cl)+" FROM "+Uti
 
 module.exports = function (gl, tb, id, cl) {
   var setter = document.createElement("div")
-  setter.appendChild(document.createTextNode(cl+":"))
-  setter.class = "browsersql setter"
+  setter.appendChild(Label(cl+":"))
+  setter.className = "browsersql setter"
   var feedback = Feedback()
   setter.appendChild(feedback)
   if (!gl.schema[tb][cl]) { return feedback.$fail("No such table: "+tb) }

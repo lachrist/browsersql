@@ -3,6 +3,8 @@ var Feedback = require("./feedback.js")
 
 module.exports = function (sql) {
   var textarea = document.createElement("textarea")
+  textarea.rows = 5
+  textarea.cols = 70
   var button = document.createElement("button")
   button.textContent = "Run"
   button.onclick = function () {
@@ -34,7 +36,7 @@ module.exports = function (sql) {
   var feedback = Feedback()
   var ol = document.createElement("ol")
   var top = document.createElement("div")
-  top.class = "browsersql console"
+  top.className = "browsersql console"
   top.appendChild(textarea)
   top.appendChild(button)
   top.appendChild(feedback)

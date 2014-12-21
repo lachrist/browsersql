@@ -2,6 +2,7 @@
 var Util = require("./util.js")
 var Feedback = require("./feedback.js")
 var Field = require("./field.js")
+var Label = require("./label.js")
 
 function search_query (db, tb, fs, ss) {
   var query = "SELECT id FROM "+Util.backquote(db)+"."+Util.backquote(tb)+" WHERE TRUE"
@@ -17,7 +18,7 @@ module.exports = function (global, table, onsearch) {
   var ids = []
   // searcher
   var searcher = document.createElement("div")
-  searcher.class = "browsersql searcher"
+  searcher.className = "browsersql searcher"
   if (!global.schema[table]) {
     var feedback = Feedback()
     feedback.$fail("No such table: "+table)
@@ -50,7 +51,7 @@ module.exports = function (global, table, onsearch) {
         selects[column].appendChild(option)
       })
       var div = document.createElement("div")
-      div.appendChild(document.createTextNode(column))
+      div.appendChild(Label(column))
       div.appendChild(selects[column])
       div.appendChild(fields[column])
       searcher.appendChild(div)
@@ -105,7 +106,7 @@ module.exports = function (global, table, onsearch) {
       })
     }
     var div = document.createElement("div")
-    div.appendChild(document.createTextNode("Page:"))
+    div.appendChild(Label("Page:"))
     div.appendChild(input)
     searcher.appendChild(div)
   } ());

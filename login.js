@@ -24,7 +24,7 @@ module.exports = function (onlogin) {
   }
   var feedback = Feedback()
   var div = document.createElement("div")
-  div.class = "browsersql login"
+  div.className = "browsersql login"
   div.appendChild(name)
   div.appendChild(password)
   div.appendChild(button)

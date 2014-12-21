@@ -13,9 +13,9 @@ require("./field/identifier.js")(Searcher)
 exports.login = Login
 exports.console = Console
 exports.kit = function (sql, database, viewers, k) {
+  if (!k) { (k=viewers,viewers={}) }
   Schema(sql, database, function (error, schema) {
     if (error) { return k(error) }
-    if (!viewers) { viewers = {} }
     var default_viewer = function (id) { var span = document.createElement("span"); span.textContent=id; return span; }
     for (var table in schema) { if (!viewers[table]) { viewers[table]=default_viewer } }
     var global = { sql:sql, database:database, schema:schema, viewers:viewers }

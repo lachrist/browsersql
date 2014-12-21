@@ -2,6 +2,7 @@
 var Feedback = require("./feedback.js")
 var Identifier = require("./field/identifier.js")
 var Util = require("./util.js")
+var Label = require("./label.js")
 
 function insert_query (db, tb, vls) {
   var query = "INSERT INTO "+Util.backquote(db)+"."+Util.backquote(tb)+" "
@@ -50,8 +51,10 @@ module.exports = function (global, table, onselect, oninsert) {
   var insert_button = document.createElement("button")
   insert_button.textContent = "Insert"
   insert_button.onclick = function () {
+    var o = oninsert()
+    if (!o) { return feedback.$fail("Cannot insert at the moment.") }
     disable()
-    global.sql(insert_query(global.database, table, oninsert()), function (err, results) {
+    global.sql(insert_query(global.database, table, o), function (err, results) {
       err?feedback.$sqlf(err):(field.$value=results[1][0][0],onselect(field.$value))
       enable()
     })
@@ -77,8 +80,8 @@ module.exports = function (global, table, onselect, oninsert) {
   //////////////
 
   var selector = document.createElement("div")
-  selector.class = "browsersql selector"
-  selector.appendChild(document.createTextNode(table+":"))
+  selector.className = "browsersql selector"
+  selector.appendChild(Label(table+":"))
   selector.appendChild(field)
   selector.appendChild(insert_button)
   selector.appendChild(delete_button)
